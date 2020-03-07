@@ -1,0 +1,124 @@
+\documentclass{article}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+% for including notebooks
+\usepackage{pdfpages}
+
+\usepackage{fancyhdr}
+\usepackage{extramarks}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage[plain]{algorithm}
+\usepackage{algpseudocode}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\usepackage{listings}
+\usepackage{color} 
+\definecolor{mygreen}{RGB}{28,172,0} 
+\definecolor{mylilas}{RGB}{170,55,241}
+
+\lstset{
+    basicstyle=\scriptsize\sffamily\color{black},
+    frame=single,
+    numbers=left,
+    showspaces=false,
+    showstringspaces=false,
+    tabsize=1
+}
+\lstset{language=Matlab,%
+    %basicstyle=\color{red},
+    breaklines=true,%
+    morekeywords={matlab2tikz},
+    keywordstyle=\color{blue},%
+    morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+    identifierstyle=\color{black},%
+    stringstyle=\color{mylilas},
+    commentstyle=\color{mygreen},%
+    showstringspaces=false,%without this there will be a symbol in the places where there is a space
+    numbers=left,%
+    numberstyle={\tiny \color{black}},% size of the numbers
+    numbersep=9pt, % this defines how far the numbers are from the text
+    emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
+    %emph=[2]{word1,word2}, emphstyle=[2]{style},    
+}
+
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+
+\linespread{1.1}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\hmwkAuthorName}
+\chead{\hmwkClass: \hmwkTitle}
+\rhead{\leftmark}
+\lfoot{\lastxmark}
+\cfoot{\thepage}
+
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+\setlength\parindent{0pt}
+
+\newcommand{\hmwkTitle}{Assignment \ 1}
+\newcommand{\hmwkDueDate}{March 10, 2020}
+\newcommand{\hmwkClass}{Introduction to AI}
+\newcommand{\hmwkClassInstructor}{Dr. Joseph Brown}
+\newcommand{\hmwkAuthorName}{\textbf{Artem Bakhanov (B18-03)}}
+
+%
+% Title Page
+%
+
+\title{
+    \vspace{2in}
+    \textmd{\textbf{\hmwkClass:\ \hmwkTitle}}\\
+    \normalsize\vspace{0.1in}\small{Due\ on\ \hmwkDueDate\ at 11:59pm}\\
+    \vspace{0.1in}\large{\textit{\hmwkClassInstructor\ }}
+    \vspace{3in}
+}
+
+\author{\hmwkAuthorName}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\pagebreak
+
+\tableofcontents
+
+\pagebreak
+
+\section{Introduction}
+\subsection{General information}
+    The assignment is solved by me, Artem Bakhanov, a student of Innopolis University. \\
+    In this assignment I used SWI Prolog of version 8.0.3-1. It can be easily downloaded from the official \href{https://www.swi-prolog.org/download/stable}{website}. I highly recommend you to use \href{https://marketplace.visualstudio.com/items?itemName=arthurwang.vsc-prolog}{VCS-Prolog} extension for Visual Studio Code. 
+\subsection{Tests}
+All the tests are created by me. You can find them in the directory called "tests". They are simple prolog files with predefined predicates. Note that I use predicates \texttt{player(+Position)}, \texttt{orc(+Position)}, and \texttt{touchdown(+Position)}, where \texttt{Position} is a position predicate \texttt{p(X, Y)} with X and Y coordinates. X-axis is a horizontal axis directed to the right, Y-axis is a vertical one directed upward. 
+\lstinputlisting[caption=Input 1={lst:listing1}, language=Prolog]{tests/input1.pro}
+\subsection{Running the code}
+To run the program you need to execute \url{main.pl} file and run the following query: \texttt{?- start(Number).} where \texttt{Number} is 0, 1, or 2, which stand for Backtracking Search, Random Search, and new Search respectively.
+
+\section{Algorithms}
+\subsection{Backtracking Algorithm}
+I implemented backtracking algorithm using the Prolog Tree. The algorithms finds the first solution and returns it. There is not randomness in the implementation which allows the algorithm to traverse the map spirally.
+\end{document}
+
