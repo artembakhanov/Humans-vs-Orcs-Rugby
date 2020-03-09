@@ -154,13 +154,8 @@ A very important metric of the algorithm is its time complexity. Since the algor
 The random search is very similar to the backtracking search except for the implementation of \texttt{move} predicate. I create new predicate \texttt{select\_random\_move(...)}, which literally selects only one move at a time (I used cut to avoid backtracking behaviour). The second difference is that the random search performs exactly 100 moves in one round. I simulate 100000 rounds and select the best solution. I used the same assumptions as I used for backtracking search.\\
 The time complexity of the algorithm is always constant since the algorithm performs the same amount of work for any input (100 moves for each round). 
 
-\subsection{Improved Backtracking Search}
-The third algorithm I implemented was actually an experiment that I liked and want to present. In this algorithm I used Prolog Tree but the algorithm does not terminate there but goes further. It selects the best solution dynamically (i.e. while performing). While implementing this algorithm I used several assumptions:
-\begin{enumerate}
-	\item There is no need to continue searching if the current path is already longer than the found one.
-	\item Sometimes it is better to traverse not spirally (like in test 7), but randomly for getting the solution. So special predicate was implemented for random move selection.
-\end{enumerate}
-Also I used all the assumptions from the Backtracking Algorithm.
+\subsection{BFS}
+The third algorithm I implemented was actually an experiment that I liked and want to present. I implemented recursive BFS using prolog tree. It is easy to implement queue in Prolog (just a list with).
 
 \section{Advanced Team}
 \subsection{Backtracking Algorithm}

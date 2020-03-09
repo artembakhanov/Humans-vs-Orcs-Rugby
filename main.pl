@@ -2,8 +2,11 @@
 :- dynamic player/1.
 :- dynamic orc/1.
 :- dynamic touchdown/1.
-:- dynamic max_axis/2.
-:- dynamic visited/1.
+:- dynamic max_axis/2. % 
+:- dynamic visited/4. % used for BFS
+:- dynamic hid/1. % used for BFS
+
+hid(0).
 
 input(Name) :-
     read_file_to_terms(Name, Terms, []),
@@ -74,6 +77,8 @@ print_table :-
     !.
 %########################################################
 
+%#######################################################
+% Backtracking Search
 pass(Ball, _, Ball1, NewPlayer, H) :-
     valid(Ball),
     slice(H, 2, T),
@@ -124,7 +129,10 @@ backtracking_solve(Ball, H, T, Pass) :-
     \+ member(Ball1, H),
     increment_time(T, NewPlayer, T2),
     backtracking_solve(Ball1, [Mname, Ball1|H], T2, Pass1).
+%#######################################################
 
+%#######################################################
+% Random Search Implementation
 select_random_move(Move, Name, Pass) :-
     (
         Pass = true, Moves = [up, down, right, left, e, ne, n, se, sw, s, w, nw];
@@ -153,6 +161,7 @@ random_move(Move, Mname) :-
     random_permutation(Moves, RandomMoves),
     member(Move, RandomMoves),
     move(Move, Mname).
+%#######################################################
 
 imp_backtracking_solve(Ball, H, T, _) :-
     touchdown(Ball),
@@ -171,44 +180,89 @@ imp_backtracking_solve(Ball, H, T, Pass) :-
     increment_time(T, NewPlayer, T2),
     imp_backtracking_solve(Ball1, [Mname, Ball1|H], T2, Pass1).
 
+%########################################################
 % BFS algrorithm.
 % This is the best algorithm here. 
+% possible moves (including ball passes)
+bfs_move(X, pass) :- direction(X, _).
+bfs_move(up, move).
+bfs_move(right, move).
+bfs_move(down, move).
+bfs_move(left, move).
+
+% Check if the cell was not visited.
+% Not visited means that the cell was not literally visited; 
+% or the cell was visited but in the history that has longer distance or used ball pass.
+not_visited(Ball, T, Type) :-
+    (\+ visited(_, Ball, _, _); 
+    (visited(Time, Ball, _, _), 
+    T < Time; visited(Time, Ball, Type1, _), Type = true, Type1 = false, Time >= T)),
+    !.
+
+% This predicate writes a cell to the knowledge base.
+% This predicate is called everytime when the system uses a cell
+% that was not used before.
+write_visited(Ball, RT2, Type, Hid) :-
+    (Type = true; 
+    ((visited(RT1, Ball, Type1, _), (Type = false) -> (Type1 = false; RT2 < RT1)); \+visited(_, Ball, _, _))),
+    retractall(visited(_, Ball, _, _)),
+    assertz(visited(RT2, Ball, Type, Hid)).
+
+% This predicates return a unique if for a  BFS 'history'.
+% It is used for histories identifications.
+history_id(A1) :-
+    hid(A),
+    A1 is A + 1,
+    retractall(hid(_)),
+    assertz(hid(A1)).
 
 % This function creates new history for a given one.
 % It performs one move and return new history.
 % Note that I do not return a history with ball with the position 
 % that was already visited before.
-bfs_new_history(history(Ball, Pass, T, H), NHistory) :-
-    move(Move, Mname),
-    update(Ball, Move, Ball1, NewPlayer, H, Pass, Pass1),
+bfs_new_history(history(_, Ball, Pass, T, RT, H), NHistory) :-
+    bfs_move(Move, Mname),
+    update(Ball, Move, p(X1, Y1), NewPlayer, H, Pass, Pass1),
+    Ball1 = p(X1, Y1),
+    Ball = p(X, Y),
     valid(Ball1),
-    \+ visited(Ball1),
-    assertz(visited(Ball1)),
     increment_time(T, NewPlayer, T2),
-    NHistory = history(Ball1, Pass1, T2, [Mname, Ball1|H]).
+    ((Mname = move -> RT2 is T2);
+    (Mname = pass -> 
+        Dx is X1 - X,
+        Dy is Y1 - Y,
+        abs(Dx, Dxa),
+        abs(Dy, Dya),
+        RT2 is RT + Dxa + Dya - 1
+        )),
+    not_visited(Ball1, RT2, Pass1),
+    history_id(Hid1),
+    write_visited(Ball1, RT2, Pass1, Hid1),
+    NHistory = history(Hid1, Ball1, Pass1, T2, RT2, [Mname, Ball1|H]).
 
 % The base case of recursive BFS.
-bfs_solve([history(Ball, Pass, T, H)|_], Solution) :-
+bfs_solve([history(_, Ball, _, T, _, H)|Tail]) :-
     touchdown(Ball),
-    Solution = history(Ball, Pass, T, H),
+    min(X, _, _),
+    (T < X ->
     retractall(min(_,_,_)),
-    assertz(min(T, H, [])),
-    !.
+    assertz(min(T, H, [])); true),
+    bfs_solve(Tail).
 
-% BFS implementation. 
-% In the beginning you should [history(p(0, 0), true, 0, [])] as the first argument.
-% It gets all the possible histories for the head history. It pops it (like in BFS) and push new histories.
-bfs_solve([History|Tail], Solution) :-
-    findall(NewHistory, bfs_new_history(History, NewHistory), NewHistories),
-    append(Tail, NewHistories, Merged),
-    bfs_solve(Merged, Solution).
-    
-run_bfs :-
-    retractall(visited(_)),
-    bfs_solve([history(p(0, 0), true, 0, [])], _).
+bfs_solve([]).
 
 %########################################################
+% BFS implementation. l
+% In the beginning you should [history(p(0, 0), true, 0, [])] as the first argument.
+% It gets all the possible histories for the head history. It pops it (like in BFS) and push new histories.
+bfs_solve([History|Tail]) :-
+    findall(NewHistory, bfs_new_history(History, NewHistory), NewHistories),
+    append(Tail, NewHistories, Merged),
+    % write(History), write(" "), write(NewHistories), nl,
+    bfs_solve(Merged).
+%########################################################
 
+%########################################################
 % the predicates below run particular methods 
 run_backtracking_search :-
     backtracking_solve(p(0, 0), [], 0, true),
@@ -222,11 +276,20 @@ run_random_search(T) :-
     run_random_search(T1);
     random_search(p(0, 0), [], 0, true)),
     !.
+    
+run_bfs :-
+    retractall(visited(_, _, _, _)),
+    retractall(hid(_)),
+    assertz(hid(0)),
+    bfs_solve([history(0, p(0, 0), true, 0, 0, [])]).
 
 run_imp_backtracking_search :-
     findall(_, imp_backtracking_solve(p(0, 0), [], 0, true), _), % uncomment this to find the best path
     !.
+%########################################################
 
+%########################################################
+% Printing a given solution 
 print_solution1([]).
 print_solution1([p(X, Y), H1 | T]) :-
     (H1 = pass -> Mes = "P "; H1 = move -> Mes = ""),
@@ -241,12 +304,14 @@ print_solution(Size, Solution, ExecutionTime) :-
     write(Size), nl,
     print_solution1(Solution1),
     write(ExecutionTime), write(" msec"), nl.
+%########################################################
 
 start(N) :- start(N, 1).
+start(N, Test, PrintTable) :- start(N, Test), PrintTable -> print_table.
 start(N, Test) :- 
     retractall(min(_, _, _)),
     assertz(min(9999, [], [])),
-    nth0(N, [run_backtracking_search, run_random_search(100000), run_imp_backtracking_search, run_bfs], Algorithm),
+    nth0(N, [run_backtracking_search, run_random_search(100000), run_bfs], Algorithm),
     format(atom(TestName), "tests/input~d.pro", [Test]),
     input(TestName),
     statistics(walltime, [_ | [_]]),
