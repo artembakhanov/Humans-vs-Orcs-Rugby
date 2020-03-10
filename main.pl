@@ -193,7 +193,7 @@ imp_backtracking_solve(Ball, H, T, Pass) :-
 not_visited(Ball, T, Type) :-
     (\+ visited(_, Ball, _, _); 
     (visited(Time, Ball, _, _), 
-    T < Time; visited(Time, Ball, Type1, _), Type = true, Type1 = false)),
+    T < Time; visited(_, Ball, Type1, _), Type = true, Type1 = false)),
     !.
 
 % This predicate writes a cell to the knowledge base.
