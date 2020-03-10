@@ -1,0 +1,14 @@
+orc(p(0, 5)).
+orc(p(1, 4)).
+orc(p(0, 3)).
+orc(p(2, 3)).
+orc(p(1, 2)).
+orc(p(3, 2)).
+orc(p(2, 1)).
+orc(p(4, 1)).
+orc(p(3, 0)).
+orc(p(5, 0)).
+player(p(3, 3)).
+player(p(2, 2)).
+touchdown(p(5, 5)).
+max_axis(5, 5).

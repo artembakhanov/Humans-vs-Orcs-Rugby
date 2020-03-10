@@ -115,6 +115,7 @@ valid(p(X, Y)) :-
 
 backtracking_solve(Ball, H, T, _) :-
     touchdown(Ball),
+    valid(Ball),
     min(T1, _,_),
     T < T1,
     retractall(min(_,_,_)),
@@ -146,6 +147,7 @@ select_random_move(Move, Name, Pass) :-
 random_search(Ball, H, T, _) :-
     T is 100;
     touchdown(Ball),
+    valid(Ball),
     retractall(min(_,_,_)),
     assertz(min(T, H, [])).
 
@@ -191,7 +193,7 @@ imp_backtracking_solve(Ball, H, T, Pass) :-
 not_visited(Ball, T, Type) :-
     (\+ visited(_, Ball, _, _); 
     (visited(Time, Ball, _, _), 
-    T < Time; visited(Time, Ball, Type1, _), Type = true, Type1 = false, Time >= T)),
+    T < Time; visited(Time, Ball, Type1, _), Type = true, Type1 = false)),
     !.
 
 % This predicate writes a cell to the knowledge base.
@@ -216,6 +218,7 @@ history_id(A1) :-
 % Note that I do not return a history with ball with the position 
 % that was already visited before.
 bfs_new_history(history(_, Ball, Pass, T, RT, H), NHistory) :-
+    valid(Ball),
     move(Move, Mname),
     update(Ball, Move, p(X1, Y1), NewPlayer, H, Pass, Pass1),
     Ball1 = p(X1, Y1),
@@ -238,6 +241,7 @@ bfs_new_history(history(_, Ball, Pass, T, RT, H), NHistory) :-
 % The base case of recursive BFS.
 bfs_solve([history(_, Ball, _, T, _, H)|Tail]) :-
     touchdown(Ball),
+    valid(Ball),
     min(X, _, _),
     (T < X ->
     retractall(min(_,_,_)),
@@ -291,8 +295,8 @@ print_solution1([p(X, Y), H1 | T]) :-
     format('~s~d ~d~n', [Mes, X, Y]),
     print_solution1(T).
 
-print_solution(9999, _, _) :-
-    write("No solution."), nl, !.
+print_solution(9999, _, ExecutionTime) :-
+    write("No solution. "), nl, write(ExecutionTime), write(" msec"), nl, !.
 
 print_solution(Size, Solution, ExecutionTime) :-
     reverse(Solution1, Solution),

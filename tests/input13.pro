@@ -1,0 +1,10 @@
+orc(p(2, 4)).
+orc(p(3, 4)).
+orc(p(4, 4)).
+orc(p(2, 3)).
+orc(p(4, 3)).
+orc(p(2, 2)).
+orc(p(3, 2)).
+orc(p(4, 2)).
+touchdown(p(3, 3)).
+max_axis(4, 4).
