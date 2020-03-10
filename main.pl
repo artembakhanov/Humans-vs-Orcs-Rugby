@@ -2,7 +2,7 @@
 :- dynamic player/1.
 :- dynamic orc/1.
 :- dynamic touchdown/1.
-:- dynamic max_axis/2. % 
+:- dynamic max_axis/2. 
 :- dynamic visited/4. % used for BFS
 :- dynamic hid/1. % used for BFS
 
@@ -121,6 +121,7 @@ backtracking_solve(Ball, H, T, _) :-
     assertz(min(T, H, [])).
 
 backtracking_solve(Ball, H, T, Pass) :-
+    history_id(_),
     valid(Ball),
     min(T1, _, _),
     T < T1,
@@ -183,12 +184,6 @@ imp_backtracking_solve(Ball, H, T, Pass) :-
 %########################################################
 % BFS algrorithm.
 % This is the best algorithm here. 
-% possible moves (including ball passes)
-bfs_move(X, pass) :- direction(X, _).
-bfs_move(up, move).
-bfs_move(right, move).
-bfs_move(down, move).
-bfs_move(left, move).
 
 % Check if the cell was not visited.
 % Not visited means that the cell was not literally visited; 
@@ -221,7 +216,7 @@ history_id(A1) :-
 % Note that I do not return a history with ball with the position 
 % that was already visited before.
 bfs_new_history(history(_, Ball, Pass, T, RT, H), NHistory) :-
-    bfs_move(Move, Mname),
+    move(Move, Mname),
     update(Ball, Move, p(X1, Y1), NewPlayer, H, Pass, Pass1),
     Ball1 = p(X1, Y1),
     Ball = p(X, Y),
@@ -258,7 +253,7 @@ bfs_solve([]).
 bfs_solve([History|Tail]) :-
     findall(NewHistory, bfs_new_history(History, NewHistory), NewHistories),
     append(Tail, NewHistories, Merged),
-    % write(History), write(" "), write(NewHistories), nl,
+    %write(History), write(" "), write(NewHistories), nl,
     bfs_solve(Merged).
 %########################################################
 
@@ -310,13 +305,15 @@ start(N) :- start(N, 1).
 start(N, Test, PrintTable) :- start(N, Test), PrintTable -> print_table.
 start(N, Test) :- 
     retractall(min(_, _, _)),
+    retractall(hid(_)),
+    assertz(hid(0)),
     assertz(min(9999, [], [])),
     nth0(N, [run_backtracking_search, run_random_search(100000), run_bfs], Algorithm),
     format(atom(TestName), "tests/input~d.pro", [Test]),
     input(TestName),
     statistics(walltime, [_ | [_]]),
-    Algorithm,
+    (Algorithm; true),
     statistics(walltime, [_ | [ExecutionTime]]),
     min(X, Y, _),
-    print_solution(X, Y, ExecutionTime).
-start.
+    print_solution(X, Y, ExecutionTime),
+    !.

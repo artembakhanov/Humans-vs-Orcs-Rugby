@@ -10,7 +10,6 @@
 
 % for including notebooks
 \usepackage{pdfpages}
-
 \usepackage{fancyhdr}
 \usepackage{extramarks}
 \usepackage{amsmath}
@@ -22,6 +21,9 @@
 \usepackage{algpseudocode}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage[toc,page]{appendix}
+\usepackage{siunitx}
+\usepackage{footnote}
 
 \usepackage{listings}
 \usepackage{color} 
@@ -112,7 +114,7 @@
     The assignment is solved by me, Artem Bakhanov, a student of Innopolis University. If you have any question regarding any part of this document and other provided materials, you can contact me via email: \href{mailto:a.bahanov@innopolis.university}{a.bahanov@innopolis.university}.\\
     In this assignment I used SWI Prolog of version 8.0.3-1. It can be easily downloaded from the official \href{https://www.swi-prolog.org/download/stable}{website}. I highly recommend you to use \href{https://marketplace.visualstudio.com/items?itemName=arthurwang.vsc-prolog}{VCS-Prolog} extension for Visual Studio Code. 
 \subsection{Tests}
-All the tests are created by me (except for the first one, which was taken from the assignment text). You can find them in the directory called "tests". They are simple prolog files with predefined predicates. Note that I use predicates \texttt{player(+Position)}, \texttt{orc(+Position)}, and \texttt{touchdown(+Position)} for defining players', orcs' and touchdowns positions respectively, where \texttt{Position} is a position predicate \texttt{p(X, Y)} with X and Y coordinates. X-axis is a horizontal axis directed to the right, Y-axis is a vertical one directed upward (please see figures ~\ref{fig:test1} and ~\ref{fig:test2}). 
+All the tests are created by me (except for the first one, which was taken from the assignment text). You can find them in the directory called "tests". They are simple prolog files with predefined predicates. Note that I use predicates \texttt{player(+Position)}, \texttt{orc(+Position)}, and \texttt{touchdown(+Position)} for defining players', orcs' and touchdowns positions respectively, where \texttt{Position} is a position predicate \texttt{p(X, Y)} with X and Y coordinates. X-axis is a horizontal axis directed to the right, Y-axis is a vertical one directed upward (please see figures ~\ref{fig:test1} and ~\ref{fig:test2}). You can find all the tests in the appendix ~\ref{appendix:tests}.
 \lstinputlisting[caption=Test 1={lst:listing1}, language=Prolog]{tests/input1.pro}
 
 \begin{figure}[ht]
@@ -132,10 +134,27 @@ All the tests are created by me (except for the first one, which was taken from 
      \end{subfigure}
      \caption{Examples of tests}
 \end{figure}
-Here and throughout I mark players (humans) as P (yellow), orcs as O (red), touchdowns as T (green). The start is always situated at $(0, 0)$. By the conventions, player at the start cell is implicitly specified in the input files.
+Here and throughout I mark players (humans) as P (yellow), orcs as O (red), touchdowns as T (green). The start is always situated at $(0, 0)$. By the conventions, player at the start cell is not explicitly specified in the input files.
 
 \subsection{Running the code}
-To run the program you need to execute \url{main.pl} file and run the following query: \texttt{?- start(Number).} where \texttt{Number} is 0, 1, or 2, which stands for Backtracking Search, Random Search, and new Search, respectively. The result will be printed to the standard output of the interpreter. 
+To run the program you need to execute \url{main.pl} file and run the following query: \texttt{?- start(Alg, Test, [ShowMap]).} where \texttt{Alg} is 0, 1, or 2, which stands for Backtracking Search, Random Search, and Improved BFS (IBFS), respectively; \texttt{Test} is the number of input test to be executed; \texttt{ShowMap} - if \texttt{true} the map and the solution path will be printed out the standard output. The result will be printed to the standard output of the interpreter. Note that I used the same output conventions as it is stated in the assignment text.
+\begin{figure}[ht]
+   	 \centering
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/image4.png}
+         \caption{Running IBSF on test 1 without map}
+         \label{fig:output1}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.45\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{images/image5.png}
+         \caption{Running IBSF on test 1 with map}
+         \label{fig:output2}
+     \end{subfigure}
+     \caption{Examples of output}
+\end{figure} 
 
 \section{Algorithms}
 \subsection{Backtracking Algorithm}
@@ -143,7 +162,7 @@ I implemented the backtracking algorithm using the Prolog Tree. The algorithm fi
 There are several assumptions I made during coding the algorithm.
 \begin{enumerate}
 	\item There is no need to return to a cell where the ball was before (i.e. duplicated move).
-	\item Since the ball cannot return to any old position, there is no need to move players. All the positions are static predicates.
+	\item Since the ball cannot return to any previous position, there is no need to move players. All the positions are static predicates.
 	\item There is no need to pass a ball over a cell where it was before. For example, if player 1 passes a ball from $(2, 1)$ to player 1 located in $(2, 5)$ after player 1 came to $(2, 1)$ from $(2, 3)$, then there is no reason no make such a pass because it could be made earlier.
 	\item Handoff is a move but with 0 cost.
 	\item The start position of the ball is not saved while performing the backtracking search since the ball cannot enter $(0, 0)$ twice and exit from there because of forbidden duplicated moves.
@@ -154,8 +173,69 @@ A very important metric of the algorithm is its time complexity. Since the algor
 The random search is very similar to the backtracking search except for the implementation of \texttt{move} predicate. I create new predicate \texttt{select\_random\_move(...)}, which literally selects only one move at a time (I used cut to avoid backtracking behaviour). The second difference is that the random search performs exactly 100 moves in one round. I simulate 100000 rounds and select the best solution. I used the same assumptions as I used for backtracking search.\\
 The time complexity of the algorithm is always constant since the algorithm performs the same amount of work for any input (100 moves for each round). 
 
-\subsection{BFS}
-The third algorithm I implemented was actually an experiment that I liked and want to present. I implemented recursive BFS using prolog tree. It is easy to implement queue in Prolog (just a list with).
+\subsection{Improved BFS (IBFS)}
+The third algorithm I implemented was actually an experiment that turned out to be very effective and fast. The algorithm is really similar to BFS but I added new features to improve its time and space performance. The idea of the algorithm is that it does not go in depth. Each iteration (recursive call) it searches new possibilities to move for a "history" from the queue (a simple Prolog list). 
+\\By "history" I mean some game state that is not finished yet; it contains current ball position, the number of moves taken, the cost of the path (i.e. depth), information about ball passes, and the path itself. The initial "history" is \texttt{history(0, p(0, 0), true, 0, 0, [])}, which means that the "history" has id 0, current ball position is $(0, 0)$, ball pass has not been performed yet, cost and number of steps are 0, and the path is empty. New possibilities to move are actually histories that can be created after exactly one move. 
+\\Let us give you an example for test 1 (see figure \ref{fig:test1}). The algorithm searches all the possibilities to move from the initial state. All the possible moves here are: go to $(0, 1)$ and $(1, 0)$ and pass the ball to player at $(0, 2)$; therefore new "histories" will be:
+\begin{lstlisting}[caption=Histories of depth 1={lst:listing2}, language=Prolog]
+	history(1,p(0,2),false,1,1,[pass,p(0,2)]);
+	history(2,p(0,1),true,1,1,[move,p(0,1)]);
+	history(3,p(1,0),true,1,1,[move,p(1,0)]).
+\end{lstlisting}
+These histories are pushed into a queue and passed to the next recursive call. In the next recursive iteration the algorithm pops the a history and tries to find its child histories and pushes them to the queue. For example in the second iteration there will be the following histories:
+\begin{lstlisting}[caption=History of depth 2={lst:listing2}, language=Prolog]
+	history(4,p(0,3),false,2,2,[move,p(0,3),pass,p(0,2)]).
+\end{lstlisting}
+
+The algorithm might seem very similar to the backtracking search but there are some additional assumptions that were made for this algorithm working significantly faster:
+\begin{enumerate}
+	\item If a history's cost is more or equal to another history's cost provided they have the same ball position (or the second one had less cost when went through the cell), then the first history can be discarded expect for the situation, described in the second assumption.
+	\item If there are two histories reaches a cell but a ball pass was performed only in the first one and their costs are the same, then BOTH histories MUST be considered.
+	\item The cost of the ball pass is a Manhattan distance between two players minus 1 ($d_1(p_1, p_2) - 1$). (Note: ball pass is considered as one move when it comes to calculating the number of moves). The cost of handoff is 0.
+\end{enumerate}
+The first assumption is quite simple. If a history reaches a cell that was reached faster (with smaller cost) there is no need to find the next histories, since another history already has a better path.\\
+The second assumption is an edge case of the first one. If it is possible to come to a cell with the same cost as another history had in this cell but with a ball pass, then it is expedient to continue searching. It might help in situtations when a ball pass is made too early but it is needed later to pass diagonal orcs wall. If discard such a history then the solution will not be found.\\
+The third assumption is about moves costs. While the cost of the regular move (up, down, right, left without handoff) is 1, the cost of a ball pass is a Manhattan distance minus one, since there are AT MOST such an amount of steps needed to be performed to reach the cell where the ball was passed to. Subtracting one is used since the last move's cost is 0 (handoff).\\
+The time complexity of the algorithm is very small due to its properties. It does not go in depth but trying to find the next moves for one-depth "histories". Full statistical analysis is presented below.
+\section{Algorithms Analysis}
+Let us compare all the algorithms that were presented above. I used the following metrics: execution time (ET), the number of nodes in the prolog tree (NN), and optimality of produced solutions (PC).\\
+It is important to mention that all the inputs were tested on my computer (Dell Inspiron 7577,  Intel Core i7-7700HQ 33, 16Gb DDR4 SDRAM with 2400 MHz memory speed). On other computers execution time can be different.\\
+Note that in case of backtracking search the number of nodes is a number of any intermediate states including unsuccessful ones; the number of runs of random search multiplied by the number of moves since only one move is selected at a time and there is no branching in the algorithm; the number of histories considered by improved BSF search. 
+\begin{savenotes}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+ &
+  \multicolumn{3}{c|}{\textbf{Backtracking}} &
+  \multicolumn{3}{c|}{\textbf{Random}} &
+  \multicolumn{3}{c|}{\textbf{Improved BFS}} &
+  \multicolumn{1}{c|}{-} \\ \hline
+\begin{tabular}[c]{@{}l@{}}Metric /\\ Test \#\end{tabular} &
+  ET &
+  NN &
+  PC &
+  ET &
+  NN &
+  PC &
+  ET &
+  NN &
+  PC &
+  \multicolumn{1}{c|}{\textbf{OP\footnote{Optimal path}}} \\ \hline
+1 & 0.5 msec   & 17                      & 17 & 35 msec   & $\leq 10^7$ & 3.5 & 2 msec   & 32  & 3  & 3  \\ \hline
+2 & 0.7 msec   & 30                      & 8  & 39 msec   & $\leq 10^7$ & 9.6 & 2 msec   & 33  & 5  & 5  \\ \hline
+3 & 0.3 msec   & 20                      & 20 & -         & $\leq 10^7$ & -   & 0.5 msec & 21  & 20 & 20 \\ \hline
+4 & -          & \textgreater 16 200 000\footnote{Were run for 2 minutes. $\SI{120000}{\milli\second} \times 135 nodes/msec$}  & -  & -         & $\leq 10^7$ & -   & 23 msec  & 116 & 10 & 10 \\ \hline
+5 & -          & \textgreater 16 200 000 & -  & 71 msec   & $\leq 10^7$ & 6.8 & 8 msec   & 108 & 5  & 5  \\ \hline
+6 & -          & \textgreater 16 200 000 & -  & -         & $\leq 10^7$ & -   & 8 msec   & 141 & 9  & 9  \\ \hline
+7 & 37000 msec & 4838138                 & 9  & -         & $\leq 10^7$ & -   & 4 msec   & 68  & 5  & 5  \\ \hline
+8 & 1 msec     & 43                      & 16 & 471 msec\footnote{Please refer to Section~\ref{section:impossible-maps}} & $\leq 10^7$ & 8   & 2 msec   & 35  & 8  & 8  \\ \hline
+\end{tabular}
+\caption{}
+\label{tab:metrics}
+\end{table}
+\end{savenotes}
+As you can see in the table \ref{tab:metrics}, IBFS show the best performance for all the metrics. It always finds the best solution with very small amount of tree nodes. For example in tests 4, 5, 6, 7 the number of nodes in backtracking algorithm is very high and hence its execution time is big (note that the algorithm did not give any solution for tests 4, 5, 6 within 2 minutes). In these tests IBFS performed well.
 
 \section{Advanced Team}
 \subsection{Backtracking Algorithm}
@@ -168,15 +248,21 @@ The situation is the same for this search as for the backtracking search. Since 
 There is no difference when it comes to distance of visible objects, therefore there is no improvement on the algorithms' time complexity. This methods will not make unsolvable map solvable and vice versa.
 It is important to mention that for some algorithms extended visibility might help to improve its performance. The very obvious examples of such algorithms are A* (heuristic function) and Tabu (Tabu lists can be created without visiting certain cells) searches.
 
-\section{Hard Maps}
+\section{Hard and Impossible Maps}
+\label{section:impossible-maps}
 There are different hard or impossible maps for different algorithms. 
 Let us talk about backtracking algorithm.
 \subsection{Backtracking Algorithm}
-In case of this algorithm, it is hard to find a solution when the map forces player to start freely move from the center of the map. Example of such a map is input 7 that is shown on the picture below. As you can see, we can treat the start of the field at $(4, 0)$ where the algorithm literally starts from. Since the order of movements are from up to left (clockwise), the algorithm will stuck in the $X = [5, 10]$ area before it goes to the left.
+In case of this algorithm, it is hard to find a solution when the map forces player to start freely move from the center of the map. Example of such a map is test 4 that is shown on the picture below. As you can see, we can treat the start of the field at $(4, 0)$ where the algorithm literally starts from. Since the order of movements are from up to left (clockwise), the algorithm will stuck in the $X = [5, 10]$ area before it goes to the left. The algorithm did not finish in 2 minutes (more than $15 \times 10^6$ nodes in the Prolog tree).
 \begin{figure}[ht]
         \centering
         \includegraphics[width=0.75\textwidth]{images/image3.png}
-        \caption{Test 7 - impossible one}
+        \caption{Test 4 - almost impossible map}
         \label{fig:test7}
 \end{figure}
+\begin{appendices}
+\section{Input Tests}
+\label{appendix:tests}
+Below you can find all the tests images.
+\end{appendices}
 \end{document}

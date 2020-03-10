@@ -17,5 +17,4 @@ orc(p(3, 1)).
 
 % touchdown
 touchdown(p(2, 3)).
-% touchdown(p(2, 1)).
-
+max_axis(5, 5).

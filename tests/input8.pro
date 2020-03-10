@@ -1,0 +1,16 @@
+orc(p(0, 6)).
+orc(p(2, 6)).
+orc(p(4, 6)).
+orc(p(6, 6)).
+orc(p(0, 4)).
+orc(p(2, 4)).
+orc(p(4, 4)).
+orc(p(6, 4)).
+orc(p(0, 2)).
+orc(p(2, 2)).
+orc(p(4, 2)).
+orc(p(6, 2)).
+orc(p(2, 0)).
+orc(p(4, 0)).
+touchdown(p(6, 0)).
+max_axis(6, 6).
